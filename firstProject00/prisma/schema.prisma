@@ -13,28 +13,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id Int @id @default(autoincrement())
+model User{
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  role Role @default(USER)
+  profile Profile?
+  posts Post[]
+}
+
+enum Role{
+  USER
+  ADMIN
+}
+
+model Profile{
+  id String @id @default(uuid())
+  bio String?
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Post{
+  id String @id @default(uuid())
+  title String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  title String @db.VarChar(255)
-  content String?
   published Boolean @default(false)
-  author User @relation(fields: [authorId],references: [id])
-  authorId Int
+  authorId String
+  author User @relation(fields: [authorId], references: [id])
+  category Category[]
 }
 
-model Profile {
-  id Int @id @default(autoincrement())
-  bio String?
-  user User @relation(fields: [userId],references: [id])
-  userId Int @unique
-}
-
-model User{
-  id Int @id @default(autoincrement())
-  email String @unique
-  name String?
+model Category{
+  id String @id @default(uuid())
+  name String
   posts Post[]
-  profile Profile?
 }

@@ -1,48 +1,64 @@
-const {PrismaClient} = require('@prisma/client')
+const express = require('express');
+const app = express();
+const prisma = require('./globalPrisma')
+const dummyData = require('./dummyData');
+app.use(express.json());
+app.use(express.urlencoded({extended:false}))
 
-const prisma = new PrismaClient()
+//Insert Data
+app.post('/createUser', async(req,res)=>{
 
-async function main(){
-    //insert data
-    await prisma.user.create({
-        data:{
-            name:'Alice',
-            email:'alice@prisma.io',
-            posts:{
-                create:{title:"Hello world"}
-            },
-            profile:{
-                create:{bio:'I like turtles'},
-            },
+try {
+   const newUser = await prisma.user.create({
+    data:{
+        name : 'User1',
+        email:'one@mail.com',
+        role : 'USER',
+        profile:{
+            create:{
+                bio:"This is User1's bio"
+            }
         },
-    })
+        posts:{
+            create:[
+                {
+                title:'User1 Post 1',
+                category:{
+                    create:{
+                        name:'Technology'
+                    }
+                }
+            },
+                {title:'User1 Post 2',
+                category:{
+                    create:{
+                        name : 'Lifestyle'
+                    }
+                }}
+            ]
+        }
 
-//update data
-const post = await prisma.post.update({
-    where:{id:1},
-    data:{published:true},
-})
-
-    //query database
-const allUsers = await prisma.user.findMany({
-    include:{
-        posts:true,
-        profile:true
     }
-})
+   });
+   console.log('User Created successfully :',newUser);
 
-//console data
-console.dir(allUsers,{depth:null})
+} catch (error) {
+    console.log(error)
+}finally{
+    await prisma.$disconnect()
 }
 
-main().then(
-    async ()=>{
-        await prisma.$disconnect()
-    }
-).catch(
-    async(e)=>{
-        console.error(e)
-        await prisma.$disconnect()
-        process.exit(1)
-    }
-)
+})
+
+
+
+//get user data
+app.get('/user',async(req,res)=>{
+    const users = await prisma.user.findMany();
+    return res.json(users);
+})
+
+
+app.listen(3000,()=>{
+    console.log('server running at http://localhost:3000')
+})
